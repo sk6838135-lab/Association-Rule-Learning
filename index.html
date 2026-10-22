@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Association Rule Learning | Machine Learning Blog</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --purple: #9270d8;
+  --dark: #39285f;
+  --light: #f1ebff;
+  --text: #514866;
+  --border: #e4dcf5;
+  --white: #ffffff;
+  --green: #32836a;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #faf9ff;
+  color: var(--text);
+  line-height: 1.7;
+}
+header {
+  background: linear-gradient(135deg, #39285f, #9270d8);
+  color: white;
+  text-align: center;
+  padding: 65px 20px;
+}
+header .tag {
+  display: inline-block;
+  padding: 5px 13px;
+  border: 1px solid #ffffff88;
+  border-radius: 20px;
+  font-size: 13px;
+}
+header h1 { font-size: clamp(30px, 5vw, 48px); margin: 18px 0 10px; }
+header p { max-width: 760px; margin: auto; color: #f2eaff; }
+nav {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 13px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+nav a {
+  color: var(--dark);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 9px;
+}
+nav a:hover { color: var(--purple); }
+.container { max-width: 1050px; margin: auto; padding: 25px 20px 60px; }
+section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 26px;
+  margin: 24px 0;
+  box-shadow: 0 5px 20px #39285f08;
+}
+h2 { color: var(--dark); margin-top: 0; font-size: 25px; }
+h3 { color: var(--dark); margin-top: 22px; }
+.accent { color: var(--purple); font-weight: bold; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 15px;
+  margin: 18px 0;
+}
+.stat {
+  background: var(--light);
+  border-radius: 12px;
+  padding: 18px;
+}
+.stat strong { display: block; font-size: 25px; color: var(--dark); }
+.stat span { font-size: 13px; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }
+th, td { padding: 11px; border: 1px solid var(--border); text-align: left; }
+th { background: var(--light); color: var(--dark); }
+tr:nth-child(even) { background: #fcfbff; }
+.formula {
+  background: #f6f1ff;
+  padding: 15px;
+  border-left: 4px solid var(--purple);
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.chartbox { max-width: 850px; height: 340px; margin: 20px auto; }
+pre {
+  background: #211b32;
+  color: #eee7ff;
+  padding: 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.note {
+  border-left: 4px solid var(--green);
+  background: #effaf5;
+  padding: 13px 16px;
+  border-radius: 5px;
+}
+footer {
+  background: var(--dark);
+  color: white;
+  text-align: center;
+  padding: 28px 15px;
+}
+footer p { margin: 5px; color: #e5dafa; }
+@media(max-width:600px) {
+  nav { position: static; line-height: 2.2; }
+  section { padding: 19px; }
+  table { font-size: 12px; }
+  th, td { padding: 7px; }
+  .chartbox { height: 280px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <span class="tag">MACHINE LEARNING · DATA MINING</span>
+  <h1>Association Rule Learning</h1>
+  <p>Discovering relationships between products using market basket analysis, support, confidence, and lift.</p>
+</header>
+
+<nav>
+  <a href="#intro">Introduction</a>
+  <a href="#working">Working</a>
+  <a href="#dataset">Dataset</a>
+  <a href="#analysis">Analysis</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#python">Python</a>
+  <a href="#applications">Applications</a>
+  <a href="#conclusion">Conclusion</a>
+</nav>
+
+<main class="container">
+
+<section id="intro">
+  <h2>1. Introduction</h2>
+  <p>
+    Association Rule Learning is an unsupervised machine learning technique
+    used to identify relationships, patterns, and associations among items
+    in a dataset. It is commonly used to discover which products are
+    frequently purchased together.
+  </p>
+  <p>
+    For example, a supermarket may discover that customers who purchase
+    diapers often purchase beer as well. This information can help the
+    business improve product placement, promotions, and recommendations.
+  </p>
+  <div class="grid">
+    <div class="stat"><strong>Unsupervised</strong><span>Learning approach</span></div>
+    <div class="stat"><strong>Apriori</strong><span>Common algorithm</span></div>
+    <div class="stat"><strong>Market Basket</strong><span>Popular application</span></div>
+  </div>
+</section>
+
+<section id="working">
+  <h2>2. Description and Working</h2>
+  <p>Association rules are written in the following form:</p>
+  <div class="formula"><strong>{Diapers} → {Beer}</strong></div>
+  <p>
+    This rule means that a transaction containing diapers is associated
+    with a transaction containing beer. It describes a pattern, not proof
+    that buying one product causes someone to buy another.
+  </p>
+  <h3>Steps involved</h3>
+  <ol>
+    <li>Collect transaction data from customers.</li>
+    <li>Identify the items appearing in each transaction.</li>
+    <li>Calculate item frequencies and support.</li>
+    <li>Generate possible association rules.</li>
+    <li>Calculate confidence and lift for each rule.</li>
+    <li>Identify useful rules and interpret the results.</li>
+  </ol>
+</section>
+
+<section id="dataset">
+  <h2>3. Dataset Overview</h2>
+  <p>
+    This practical uses a small illustrative market basket dataset containing
+    10 transactions. Each transaction represents products purchased together.
+    The dataset is provided directly in the Python code below.
+  </p>
+  <div class="grid">
+    <div class="stat"><strong>10</strong><span>Total transactions</span></div>
+    <div class="stat"><strong>6</strong><span>Unique products</span></div>
+    <div class="stat"><strong>4</strong><span>Example rules analysed</span></div>
+  </div>
+  <h3>Sample transaction table</h3>
+  <table>
+    <thead><tr><th>Transaction</th><th>Products purchased</th></tr></thead>
+    <tbody>
+      <tr><td>T1</td><td>Bread, Milk</td></tr>
+      <tr><td>T2</td><td>Bread, Diapers, Beer, Eggs</td></tr>
+      <tr><td>T3</td><td>Milk, Diapers, Beer, Cola</td></tr>
+      <tr><td>T4</td><td>Bread, Milk, Diapers, Beer</td></tr>
+      <tr><td>T5</td><td>Bread, Milk, Diapers, Cola</td></tr>
+      <tr><td>T6</td><td>Bread, Butter</td></tr>
+      <tr><td>T7</td><td>Bread, Milk, Butter</td></tr>
+      <tr><td>T8</td><td>Milk, Butter</td></tr>
+      <tr><td>T9</td><td>Bread, Milk, Diapers, Beer</td></tr>
+      <tr><td>T10</td><td>Bread, Eggs</td></tr>
+    </tbody>
+  </table>
+  <p class="note">
+    This is a small teaching dataset created to demonstrate the calculations.
+    Its findings should not be treated as conclusions about real supermarket customers.
+  </p>
+</section>
+
+<section id="analysis">
+  <h2>4. Dataset Analysis and Graphs</h2>
+  <h3>Product frequency</h3>
+  <p>
+    The chart shows the number of transactions containing each product.
+    A transaction is counted once for a product, even if repeated entries existed.
+  </p>
+  <div class="chartbox"><canvas id="frequencyChart"></canvas></div>
+
+  <h3>Association rule comparison</h3>
+  <p>
+    The following rules are calculated from the 10 transactions above.
+    Support is shown as a percentage; confidence and lift are shown as ratios
+    in the chart to make their values comparable.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Association rule</th><th>Support</th><th>Confidence</th><th>Lift</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Diapers → Beer</td><td>40%</td><td>80%</td><td>2.00</td></tr>
+      <tr><td>Bread → Milk</td><td>50%</td><td>62.5%</td><td>0.89</td></tr>
+      <tr><td>Bread → Eggs</td><td>20%</td><td>25%</td><td>1.25</td></tr>
+      <tr><td>Milk → Butter</td><td>20%</td><td>28.6%</td><td>0.95</td></tr>
+    </tbody>
+  </table>
+  <div class="chartbox"><canvas id="rulesChart"></canvas></div>
+
+  <h3>Interpretation of results</h3>
+  <ul>
+    <li><strong>Diapers → Beer:</strong> The products occur together in 40% of transactions. Of transactions containing diapers, 80% also contain beer. The lift of 2 indicates a positive association in this dataset.</li>
+    <li><strong>Bread → Milk:</strong> Bread and milk occur together frequently, but the lift below 1 indicates that milk is not more likely in bread transactions than its overall transaction frequency would suggest.</li>
+    <li><strong>Bread → Eggs:</strong> The lift is 1.25, indicating a positive association in this small sample, although the rule has relatively low confidence.</li>
+    <li><strong>Milk → Butter:</strong> The lift is below 1, so the data does not show a positive association for this rule.</li>
+  </ul>
+</section>
+
+<section id="formulas">
+  <h2>5. Important Formulas</h2>
+  <h3>A. Support</h3>
+  <p>Support measures how often the items in a rule appear together in all transactions.</p>
+  <div class="formula">
+    Support(A → B) = Transactions containing A and B ÷ Total transactions
+  </div>
+  <p>For Diapers → Beer:</p>
+  <p>Support = 4 ÷ 10 = <strong>0.40 = 40%</strong></p>
+
+  <h3>B. Confidence</h3>
+  <p>Confidence measures the proportion of transactions containing A that also contain B.</p>
+  <div class="formula">
+    Confidence(A → B) = Support(A and B) ÷ Support(A)
+  </div>
+  <p>Diapers appear in 5 transactions, and 4 of these also contain beer.</p>
+  <p>Confidence = 4 ÷ 5 = <strong>0.80 = 80%</strong></p>
+
+  <h3>C. Lift</h3>
+  <p>Lift compares the confidence of a rule with the overall frequency of its consequent.</p>
+  <div class="formula">
+    Lift(A → B) = Confidence(A → B) ÷ Support(B)
+  </div>
+  <p>Beer appears in 4 out of 10 transactions.</p>
+  <p>Lift = 0.80 ÷ 0.40 = <strong>2.00</strong></p>
+
+  <h3>Meaning of lift</h3>
+  <ul>
+    <li><strong>Lift greater than 1:</strong> Positive association.</li>
+    <li><strong>Lift equal to 1:</strong> No association beyond the baseline frequency.</li>
+    <li><strong>Lift below 1:</strong> Negative association.</li>
+  </ul>
+  <p>
+    These measures describe patterns in observed transactions. A high lift alone
+    does not prove causation or guarantee that a rule will be useful in business.
+  </p>
+</section>
+
+<section id="algorithm">
+  <h2>6. Apriori Algorithm</h2>
+  <p>
+    Apriori is a widely known algorithm for discovering frequent itemsets
+    and generating association rules. It uses the principle that if an itemset
+    is frequent, all its non-empty subsets must also be frequent.
+  </p>
+  <ol>
+    <li>Set a minimum support threshold.</li>
+    <li>Find individual items meeting the threshold.</li>
+    <li>Combine frequent items to generate candidate itemsets.</li>
+    <li>Remove candidates that do not meet minimum support.</li>
+    <li>Generate association rules and evaluate confidence and lift.</li>
+  </ol>
+  <p>
+    For larger datasets, algorithms such as FP-Growth can also be used to
+    find frequent patterns efficiently.
+  </p>
+</section>
+
+<section id="python">
+  <h2>7. Python Implementation</h2>
+  <p>
+    The following code uses the same transactions to calculate the four
+    example rules and generate graphs. It uses pandas and mlxtend.
+  </p>
+  <p><strong>Install the required libraries:</strong></p>
+  <pre>pip install pandas mlxtend matplotlib</pre>
+
+  <pre>import pandas as pd
+import matplotlib.pyplot as plt
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# Market basket transaction dataset
+transactions = [
+    ['Bread', 'Milk'],
+    ['Bread', 'Diapers', 'Beer', 'Eggs'],
+    ['Milk', 'Diapers', 'Beer', 'Cola'],
+    ['Bread', 'Milk', 'Diapers', 'Beer'],
+    ['Bread', 'Milk', 'Diapers', 'Cola'],
+    ['Bread', 'Butter'],
+    ['Bread', 'Milk', 'Butter'],
+    ['Milk', 'Butter'],
+    ['Bread', 'Milk', 'Diapers', 'Beer'],
+    ['Bread', 'Eggs']
+]
+
+# Convert transactions into a one-hot encoded table
+encoder = TransactionEncoder()
+encoded = encoder.fit(transactions).transform(transactions)
+basket = pd.DataFrame(encoded, columns=encoder.columns_)
+
+print("Transaction dataset:")
+print(basket.astype(int))
+
+# Find frequent itemsets
+frequent_items = apriori(
+    basket,
+    min_support=0.10,
+    use_colnames=True
+)
+
+print("\\nFrequent itemsets:")
+print(frequent_items)
+
+# Generate association rules
+rules = association_rules(
+    frequent_items,
+    metric="confidence",
+    min_threshold=0.20
+)
+
+# Display useful columns
+print("\\nAssociation rules:")
+print(rules[
+    ['antecedents', 'consequents',
+     'support', 'confidence', 'lift']
+].round(3))
+
+# Product frequency chart
+basket.sum().sort_values(ascending=False).plot(
+    kind='bar',
+    title='Product Frequency in Transactions',
+    color='#9270d8'
+)
+plt.ylabel('Number of Transactions')
+plt.xlabel('Product')
+plt.tight_layout()
+plt.show()
+
+# Show the strongest rules by lift
+top_rules = rules.sort_values(
+    'lift', ascending=False
+).head(10)
+
+labels = [
+    f"{', '.join(a)} -> {', '.join(c)}"
+    for a, c in zip(
+        top_rules['antecedents'],
+        top_rules['consequents']
+    )
+]
+
+plt.figure(figsize=(10, 5))
+plt.barh(labels, top_rules['lift'], color='#9270d8')
+plt.xlabel('Lift')
+plt.title('Top Association Rules by Lift')
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.show()</pre>
+
+  <p class="note">
+    The Python code generates rules from the dataset rather than hard-coding
+    the four example rules. Since it uses a small sample and a low support
+    threshold, additional rules may appear in its output.
+  </p>
+</section>
+
+<section id="applications">
+  <h2>8. Real-World Applications</h2>
+  <div class="grid">
+    <div class="stat"><strong>Retail</strong><span>Discover products frequently bought together.</span></div>
+    <div class="stat"><strong>E-commerce</strong><span>Recommend related products to customers.</span></div>
+    <div class="stat"><strong>Healthcare</strong><span>Explore co-occurring patterns in suitable clinical datasets.</span></div>
+    <div class="stat"><strong>Banking</strong><span>Explore relationships between customer service usage patterns.</span></div>
+  </div>
+  <h3>Advantages</h3>
+  <ul>
+    <li>Finds patterns without requiring a labelled target variable.</li>
+    <li>Produces rules that can be interpreted by people.</li>
+    <li>Can support recommendations and business decisions.</li>
+  </ul>
+  <h3>Limitations</h3>
+  <ul>
+    <li>Large datasets can produce too many rules.</li>
+    <li>Rare patterns may be missed if support thresholds are too high.</li>
+    <li>Association does not establish cause and effect.</li>
+    <li>Results may change when the dataset or customer behaviour changes.</li>
+  </ul>
+</section>
+
+<section id="conclusion">
+  <h2>9. Conclusion</h2>
+  <p>
+    Association Rule Learning is an important unsupervised machine learning
+    technique for identifying relationships among items. Using market basket
+    analysis, we calculated support, confidence, and lift to understand
+    product-purchasing patterns.
+  </p>
+  <p>
+    In this illustrative dataset, the rule <strong>Diapers → Beer</strong>
+    has 40% support, 80% confidence, and a lift of 2. This means the two
+    products occur together more often than expected from the overall
+    frequency of beer in these transactions. However, the dataset is small,
+    so the pattern would need to be tested on more data before making business
+    decisions.
+  </p>
+  <p><strong>Learning outcome:</strong> Understand how transaction data can be transformed into meaningful association rules using Python.</p>
+</section>
+
+<section id="references">
+  <h2>10. References</h2>
+  <ul>
+    <li><a href="https://rasbt.github.io/mlxtend/" target="_blank" rel="noopener">mlxtend documentation</a></li>
+    <li><a href="https://pandas.pydata.org/docs/" target="_blank" rel="noopener">Pandas documentation</a></li>
+    <li><a href="https://matplotlib.org/stable/" target="_blank" rel="noopener">Matplotlib documentation</a></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <h3 style="color:white;margin:0">Association Rule Learning</h3>
+  <p>Machine Learning Practical Blog</p>
+  <p>Educational project · Market Basket Analysis</p>
+</footer>
+
+<script>
+const purple = '#9270d8';
+const dark = '#39285f';
+
+new Chart(document.getElementById('frequencyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Bread', 'Milk', 'Diapers', 'Beer', 'Butter', 'Eggs', 'Cola'],
+    datasets: [{
+      label: 'Transactions containing product',
+      data: [8, 7, 5, 4, 3, 2, 2],
+      backgroundColor: purple,
+      borderRadius: 5
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+new Chart(document.getElementById('rulesChart'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'Diapers → Beer',
+      'Bread → Milk',
+      'Bread → Eggs',
+      'Milk → Butter'
+    ],
+    datasets: [
+      {
+        label: 'Support (%)',
+        data: [40, 50, 20, 20],
+        backgroundColor: '#9270d8'
+      },
+      {
+        label: 'Confidence (%)',
+        data: [80, 62.5, 25, 28.6],
+        backgroundColor: '#b5a0e8'
+      },
+      {
+        label: 'Lift × 40',
+        data: [80, 35.7, 50, 38.1],
+        backgroundColor: '#39285f'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Value (lift scaled × 40)' }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            if (context.dataset.label === 'Lift × 40') {
+              return 'Lift: ' + (context.raw / 40).toFixed(2);
+            }
+            return context.dataset.label + ': ' + context.raw + '%';
+          }
+        }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
